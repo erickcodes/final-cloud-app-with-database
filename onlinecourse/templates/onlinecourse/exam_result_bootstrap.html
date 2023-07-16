@@ -48,7 +48,20 @@
         {% endif %}
         <div class="card-columns-vertical mt-1">
         <h5 class="">Exam results</h5>
-            {% for question %}
+            {% for question in feedback %}
+            <div class="card-header"><h5>{{ question[0].question_text }}</h5></div>
+            <p class="text-success">Correct choice(s)</p>
+            <ul class="text-dark">
+                {% for correct_choice in question[1] %}
+                <li>{{ correct_choice.choice_text }}</li>
+                {% endfor %}
+            </ul>
+            <ul class="text-success">
+                {% for correct_answer in question[2] %}
+                <li>{{ correct_answer.choice_text }}</li>
+                {% endfor %}
+            </ul>
+            {% endfor %}
         </div>
     </div>
 </body>

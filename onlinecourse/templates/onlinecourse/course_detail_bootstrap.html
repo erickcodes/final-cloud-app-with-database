@@ -53,7 +53,6 @@
                     <div id="exam{{ forloop.counter }}"class="collapse">
                         <form id="questionform" action="submit/" method="post">
                             {% for question in lesson.question_set.all %}
-                            <input type="hidden" name="question_{{ question.id }}" value="{{ question.id }}"></input>
                             <div class="card mt-1">
                                 <div class="card-header"><h5>{{ question.question_text}}</h5></div>
                                 {% csrf_token %}

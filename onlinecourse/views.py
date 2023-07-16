@@ -116,12 +116,11 @@ def submit(request, course_id):
     user = request.user
     enrollment = Enrollment.objects.get(user=user, course=course)
     answers = extract_answers(request)
-    question_ids = extract_questions(request)
     submission = Submission.objects.create(enrollment=enrollment)
     for answer in answers:
         choice = get_object_or_404(Choice, pk=answer)
         submission.choices.add(choice)
-    return HttpResponseRedirect(reverse(viewname='onlinecourse:show_exam_result', args=(course_id, submission.id, question_ids)))
+    return HttpResponseRedirect(reverse(viewname='onlinecourse:show_exam_result', args=(course_id, submission.id,)))
 
 
 # <HINT> A example method to collect the selected choices from the exam form from the request object
@@ -150,23 +149,28 @@ def extract_questions(request):
         # Get the selected choice ids from the submission record
         # For each selected choice, check if it is a correct answer or not
         # Calculate the total score
-def show_exam_result(request, course_id, submission_id, question_ids):
+def show_exam_result(request, course_id, submission_id):
     total_grade = 0
     out_of_grade = 0
     course = get_object_or_404(Course, pk=course_id)
     submission = get_object_or_404(Submission, pk=submission_id)
     context = {}
-    context['feedback'] = {} # question: correct_choices
-    for question_id in question_ids:
-        question_obj = get_object_or_404(Question, pk=question_id)
+    context['feedback'] = []
+    for question_obj in unique_questions(submission):
         correct_answers = submission.choices.filter(is_correct=True)
         correct_choices = Choice.objects.filter(question=question_obj, is_correct=True)
-        context['feedback'][question_obj] = correct_choices
+        context['feedback'].append([question_obj, correct_choices, correct_answers])
         grade = question_obj.grade
         out_of_grade += grade 
-        if len(correct_choices) = len(correct_answers):
+        if len(correct_choices) == len(correct_answers):
             total_grade += grade 
     context['grade'] = 100 * total_grade / out_of_grade
     context['course'] = course
     return render(request, 'onlinecourse/exam_result_bootstrap.html', context)
 
+def unique_questions(submission):
+    questions = set()
+    for choice in submission.choice.all():
+        question = get_object_or_404(Question, pk=choice.question.id)
+        questions.add(question)
+    return questions
