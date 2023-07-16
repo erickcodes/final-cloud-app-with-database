@@ -155,22 +155,31 @@ def show_exam_result(request, course_id, submission_id):
     course = get_object_or_404(Course, pk=course_id)
     submission = get_object_or_404(Submission, pk=submission_id)
     context = {}
-    context['feedback'] = []
+    context['result'] = []
     for question_obj in unique_questions(submission):
-        correct_answers = submission.choices.filter(is_correct=True)
+        answers = submission.choices.filter(question=question_obj)
         correct_choices = Choice.objects.filter(question=question_obj, is_correct=True)
-        context['feedback'].append([question_obj, correct_choices, correct_answers])
-        grade = question_obj.grade
-        out_of_grade += grade 
-        if len(correct_choices) == len(correct_answers):
-            total_grade += grade 
+        context['result'].append(FeedBack(question_obj, correct_choices, answers))
+        out_of_grade += question_obj.grade
+        if len(correct_choices) == user_correct_count(answers):
+            total_grade += question_obj.grade
     context['grade'] = 100 * total_grade / out_of_grade
     context['course'] = course
     return render(request, 'onlinecourse/exam_result_bootstrap.html', context)
 
+def user_correct_count(answers):
+    return sum(answer.is_correct for answer in answers)
+        
+
 def unique_questions(submission):
     questions = set()
-    for choice in submission.choice.all():
+    for choice in submission.choices.all():
         question = get_object_or_404(Question, pk=choice.question.id)
         questions.add(question)
     return questions
+
+class FeedBack:
+    def __init__(self, question, correct_choices, answers):
+        self.question = question
+        self.correct_choices = correct_choices
+        self.answers = answers
